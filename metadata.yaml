@@ -1,0 +1,25 @@
+name: astrbot_plugin_llm_guard
+display_name: LLM 安全拦截兜底
+desc: 拦截被泄漏到用户面前的 LLM 错误文案（如 Moonshot/Kimi 的 content_filter「The request was rejected because it was considered high risk」），可选换备用 provider 重新生成正常回复，并支持把触发风控的原始 prompt 转存到本地用于定位根因
+short_desc: 挡住 content_filter 错误文案 · 备用 provider 重发 · 风控根因自诊断
+version: 1.0.0
+author: SeaSmall
+repo: https://github.com/SeaSmall/astrbot-plugin-llm-guard
+license: MIT
+astrbot_version: ">=4.16.0"
+support_platforms:
+  - aiocqhttp
+  - qq_official
+  - telegram
+  - wecom
+  - lark
+  - dingtalk
+  - discord
+  - satori
+social_link: https://github.com/SeaSmall
+tags:
+  - guard
+  - content-filter
+  - reliability
+  - moonshot
+  - kimi
