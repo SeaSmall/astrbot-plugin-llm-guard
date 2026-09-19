@@ -1,0 +1,5 @@
+﻿__pycache__/
+*.pyc
+*.pyo
+llm_guard_dumps/
+.DS_Store
