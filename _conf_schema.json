@@ -1,0 +1,76 @@
+{
+  "enabled": {
+    "type": "bool",
+    "description": "启用兜底拦截",
+    "hint": "关闭后本插件完全不做任何处理。",
+    "default": true
+  },
+  "mode": {
+    "type": "string",
+    "description": "命中拦截特征后的处理方式",
+    "hint": "replace=替换成重发结果或兜底文案（推荐）；drop=整条丢弃什么都不发；log=只记日志不改动（用于纯诊断）。",
+    "options": ["replace", "drop", "log"],
+    "default": "replace"
+  },
+  "retry_provider_id": {
+    "type": "string",
+    "description": "被拦截时用于重新生成回复的备用 provider ID",
+    "hint": "留空则只发兜底文案。填了之后：一旦主模型被风控拦截，本插件会用这个 provider 重发一次，机器人依旧能正常回话。ID 在 AstrBot「服务提供商」页面里查（形如 `deepseek`、`glm-4`、`moonshot`）。**建议填一个非 Moonshot/Kimi 的 provider**，否则同一家风控会再次拦截。",
+    "obvious_hint": true,
+    "default": ""
+  },
+  "retry_timeout": {
+    "type": "int",
+    "description": "备用 provider 重发的超时时间（秒）",
+    "hint": "超时后放弃重发，改用兜底文案。",
+    "default": 60
+  },
+  "fallback_text": {
+    "type": "string",
+    "description": "重发失败时发送的兜底文案",
+    "hint": "留空则不发任何内容（等同于静默丢弃）。",
+    "default": "（刚才那条没能生成出来，再发一次试试？）"
+  },
+  "soft_scan": {
+    "type": "bool",
+    "description": "同时扫描「通用内容安全措辞」二级特征",
+    "hint": "会额外识别 high risk / 内容安全 / 高风险 / 被拒绝 等泛化措辞。仅在整条消息较短且不像成段回复时才判定，用来兜住其它服务商的不同措辞。默认关闭以免误伤正常聊天。",
+    "default": false
+  },
+  "soft_max_len": {
+    "type": "int",
+    "description": "二级特征扫描的最大文本长度",
+    "hint": "超过该长度的消息不再做二级特征判定，避免把正常的长回复误判成报错。",
+    "default": 300
+  },
+  "extra_markers": {
+    "type": "string",
+    "description": "自定义拦截特征（多个用逗号或换行分隔）",
+    "hint": "填了就按**强特征**处理：大小写不敏感、不受长度限制。当你用的服务商返回的报错措辞不在内置表里时，把那段特征短语填进来。例如服务商返回 `blocked by policy`，就填 `blocked by policy`。留空则不启用。",
+    "default": ""
+  },
+  "patch_custom_error_reply": {
+    "type": "bool",
+    "description": "额外加固：把兜底文案挂到事件的「人设自定义错误消息」上",
+    "hint": "AstrBot 有几条把错误文案直接 `event.send()` 发出的路径（如 `Error occurred while processing agent request: ...`），它们不经过发送前钩子，本插件拦不到 —— 但都优先采用人设的自定义错误消息。打开此项后，本插件会在每次请求前把上方 fallback_text 挂上去，从源头堵住这几条路径。你已在人设里配置了自定义错误消息时不会覆盖。默认开启。",
+    "default": true
+  },
+  "dump_on_reject": {
+    "type": "bool",
+    "description": "被拦截时自动转存当次 LLM 请求",
+    "hint": "把触发风控的完整 prompt（人设 / 历史 / 插件注入内容 / 用户消息）写成 JSON 落盘，用于定位到底是哪段内容触发了服务商风控。排查完建议关掉。",
+    "default": false
+  },
+  "dump_dir": {
+    "type": "string",
+    "description": "转存目录",
+    "hint": "留空则使用 AstrBot 工作目录下的 `llm_guard_dumps/`。",
+    "default": ""
+  },
+  "log_prompt_preview": {
+    "type": "int",
+    "description": "被拦截时在日志里打印 prompt 的前 N 个字符",
+    "hint": "0 表示不打印。设为 500 左右可以在日志里直接看到当次请求开头，快速判断是不是人设或注入内容触发的。",
+    "default": 0
+  }
+}
