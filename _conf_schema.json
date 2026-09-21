@@ -7,9 +7,8 @@
   },
   "mode": {
     "type": "string",
-    "description": "命中拦截特征后的处理方式",
-    "hint": "replace=替换成重发结果或兜底文案（推荐）；drop=整条丢弃什么都不发；log=只记日志不改动（用于纯诊断）。",
-    "options": ["replace", "drop", "log"],
+    "description": "命中拦截特征后的处理方式，可填：replace / drop / log",
+    "hint": "replace：替换成重发结果或兜底文案（推荐，默认）；drop：整条丢弃什么都不发；log：只记日志不改动（用于纯诊断）。填其它值会按 replace 处理。",
     "default": "replace"
   },
   "retry_provider_id": {
