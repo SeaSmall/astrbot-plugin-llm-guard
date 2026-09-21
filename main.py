@@ -145,27 +145,8 @@ class LLMGuardPlugin(Star):
         super().__init__(context)
         self.config = config or {}
 
-        self.enabled = _as_bool(self._cfg("enabled", True), True)
-        self.mode = str(self._cfg("mode", "replace") or "replace").strip().lower()
-        if self.mode not in ("replace", "drop", "log"):
-            logger.warning(f"[llm_guard] 未知 mode={self.mode!r}，回退为 replace")
-            self.mode = "replace"
-
-        self.fallback_text = str(self._cfg("fallback_text", DEFAULT_FALLBACK_TEXT) or "")
-        self.retry_provider_id = str(self._cfg("retry_provider_id", "") or "").strip()
-        self.retry_timeout = _as_int(self._cfg("retry_timeout", 60), 60)
-
-        self.soft_scan = _as_bool(self._cfg("soft_scan", False), False)
-        self.soft_max_len = _as_int(self._cfg("soft_max_len", 300), 300)
-        self.extra_markers = _as_markers(self._cfg("extra_markers", ""))
-
-        self.patch_custom_error_reply = _as_bool(
-            self._cfg("patch_custom_error_reply", True), True
-        )
-        self.dump_on_reject = _as_bool(self._cfg("dump_on_reject", False), False)
-        self.dump_dir = str(self._cfg("dump_dir", "") or "").strip()
-        self.log_prompt_preview = _as_int(self._cfg("log_prompt_preview", 0), 0)
-
+        # 配置项一律在「用的时候」现读（见下方 property），不在这里缓存 ——
+        # 这样在 WebUI 改完设置后即便插件没重载，新值也能立即生效。
         # 最近一次 LLM 请求的快照（用于诊断与「换 provider 重发」）
         self._last_request: dict = {}
         # 拦截记录（最近 N 条，供 /llmguard 查看）
@@ -175,6 +156,70 @@ class LLMGuardPlugin(Star):
 
     def _cfg(self, key: str, default: object) -> object:
         return self.config.get(key, default)
+
+    # ------------------------------------------------------------------ #
+    # 配置项（每次现读，保证 WebUI 改动即时生效）
+    # ------------------------------------------------------------------ #
+    @property
+    def enabled(self) -> bool:
+        """总开关。"""
+        return _as_bool(self._cfg("enabled", True), True)
+
+    @property
+    def mode(self) -> str:
+        """命中拦截特征后的处理方式：replace / drop / log。"""
+        value = str(self._cfg("mode", "replace") or "replace").strip().lower()
+        return value if value in ("replace", "drop", "log") else "replace"
+
+    @property
+    def fallback_text(self) -> str:
+        """重发失败时发送的兜底文案。"""
+        return str(self._cfg("fallback_text", DEFAULT_FALLBACK_TEXT) or "")
+
+    @property
+    def retry_provider_id(self) -> str:
+        """被拦截时用于重新生成回复的备用 provider ID。"""
+        return str(self._cfg("retry_provider_id", "") or "").strip()
+
+    @property
+    def retry_timeout(self) -> int:
+        """备用 provider 重发的超时时间（秒）。"""
+        return _as_int(self._cfg("retry_timeout", 60), 60)
+
+    @property
+    def soft_scan(self) -> bool:
+        """是否启用二级（泛化措辞）特征扫描。"""
+        return _as_bool(self._cfg("soft_scan", False), False)
+
+    @property
+    def soft_max_len(self) -> int:
+        """二级特征扫描的最大文本长度。"""
+        return _as_int(self._cfg("soft_max_len", 300), 300)
+
+    @property
+    def extra_markers(self) -> tuple[str, ...]:
+        """用户自定义的拦截特征。"""
+        return _as_markers(self._cfg("extra_markers", ""))
+
+    @property
+    def patch_custom_error_reply(self) -> bool:
+        """是否把兜底文案挂到 persona 自定义错误消息上。"""
+        return _as_bool(self._cfg("patch_custom_error_reply", True), True)
+
+    @property
+    def dump_on_reject(self) -> bool:
+        """是否在拦截时转存当次请求。"""
+        return _as_bool(self._cfg("dump_on_reject", False), False)
+
+    @property
+    def dump_dir(self) -> str:
+        """转存目录。"""
+        return str(self._cfg("dump_dir", "") or "").strip()
+
+    @property
+    def log_prompt_preview(self) -> int:
+        """拦截时在日志里打印 prompt 的前 N 个字符。"""
+        return _as_int(self._cfg("log_prompt_preview", 0), 0)
 
     # ------------------------------------------------------------------ #
     # 拦截判定
